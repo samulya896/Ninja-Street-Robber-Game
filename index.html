@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NinjaMind: Street Heist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ══════ HEADER ══════ -->
+  <div class="header">
+    <div class="wanted-stamp">⚠ WANTED ⚠</div>
+    <h1>NinjaMind: <span class="title-accent">Street Heist</span></h1>
+    <p class="subtitle">BFS Ninja 🥷 vs DFS Ninja 🥷 — Who catches the robber first?</p>
+  </div>
+
+  <div id="status">Press Start</div>
+
+  <div class="stats">
+    <span>🦹 Robber moves: <b id="playerMoves">0</b></span>
+    <span>🥷 BFS steps: <b id="bfsSteps">0</b></span>
+    <span>🥷 DFS steps: <b id="dfsSteps">0</b></span>
+    <span>BFS scanned: <b id="bfsExplored">0</b></span>
+    <span>DFS scanned: <b id="dfsExplored">0</b></span>
+  </div>
+
+  <div id="insight" class="insight">BFS ninja sweeps streets level by level · DFS ninja dives deep into alleys</div>
+
+  <!-- ══════ GAME ROW: queue | BFS maze | DFS maze | stack ══════ -->
+  <div class="game-row">
+
+    <!-- BFS Queue -->
+    <div class="struct-panel">
+      <div class="struct-header bfs-header">
+        <span class="struct-title">🥷 BFS Patrol Queue</span>
+        <span class="struct-type">FIFO — front dequeued first</span>
+      </div>
+      <div class="struct-meta">
+        Size: <b id="bfsQueueSize">0</b>
+        <span class="struct-hint">front → back</span>
+      </div>
+      <div class="struct-scroll">
+        <div id="bfsQueue" class="struct-list"></div>
+        <div class="struct-empty" id="bfsQueueEmpty">Queue empty</div>
+      </div>
+    </div>
+
+    <!-- Both mazes -->
+    <div class="mazes-wrap">
+      <div class="maze-panel">
+        <div class="maze-label bfs-label">🥷 BFS NINJA</div>
+        <div id="mazeBFS" class="maze"></div>
+      </div>
+      <div class="maze-panel">
+        <div class="maze-label dfs-label">🥷 DFS NINJA</div>
+        <div id="mazeDFS" class="maze"></div>
+      </div>
+    </div>
+
+    <!-- DFS Stack -->
+    <div class="struct-panel">
+      <div class="struct-header dfs-header">
+        <span class="struct-title">🥷 DFS Shadow Stack</span>
+        <span class="struct-type">LIFO — top popped first</span>
+      </div>
+      <div class="struct-meta">
+        Size: <b id="dfsStackSize">0</b>
+        <span class="struct-hint">top → bottom</span>
+      </div>
+      <div class="struct-scroll">
+        <div id="dfsStack" class="struct-list"></div>
+        <div class="struct-empty" id="dfsStackEmpty">Stack empty</div>
+      </div>
+    </div>
+
+  </div><!-- /game-row -->
+
+  <!-- Controls -->
+  <div class="controls">
+    <button id="startBtn">▶ Start Heist</button>
+    <button id="restartBtn">↺ New Streets</button>
+  </div>
+  <p class="hint">Arrow Keys / WASD to move the robber 🦹</p>
+
+  <!-- ══════ ANALYSIS — horizontal 3-col strip ══════ -->
+  <div class="analysis-strip">
+
+    <!-- Col 1: Last move table -->
+    <div class="analysis-card">
+      <div class="card-title">📋 Last Move Breakdown</div>
+      <table class="cmp-table">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th class="bfs-th">BFS Ninja</th>
+            <th class="dfs-th">DFS Ninja</th>
+            <th>Winner</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Chase route</td>
+            <td class="bfs-td" id="cmpBfsPath">—</td>
+            <td class="dfs-td" id="cmpDfsPath">—</td>
+            <td id="cmpPathWinner">—</td>
+          </tr>
+          <tr>
+            <td>Streets scanned</td>
+            <td class="bfs-td" id="cmpBfsExp">—</td>
+            <td class="dfs-td" id="cmpDfsExp">—</td>
+            <td id="cmpExpWinner">—</td>
+          </tr>
+          <tr>
+            <td>Memory used</td>
+            <td class="bfs-td" id="cmpBfsStruct">—</td>
+            <td class="dfs-td" id="cmpDfsStruct">—</td>
+            <td id="cmpStructWinner">—</td>
+          </tr>
+          <tr>
+            <td>Shortest route?</td>
+            <td class="bfs-td">✅ Always</td>
+            <td class="dfs-td">❌ No</td>
+            <td class="winner-cell bfs-winner">BFS</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Col 2: Bar chart -->
+    <div class="analysis-card">
+      <div class="card-title">📊 Streets Scanned per Move</div>
+      <div class="chart-wrap">
+        <div class="chart-y-axis" id="chartYAxis"></div>
+        <div class="chart-bars" id="chartBars"></div>
+      </div>
+      <div class="chart-footer">
+        <div class="chart-legend">
+          <span class="legend-dot bfs-dot"></span>BFS Ninja
+          <span class="legend-dot dfs-dot"></span>DFS Ninja
+        </div>
+        <span class="chart-note" id="chartNote">Move to populate</span>
+      </div>
+    </div>
+
+    <!-- Col 3: Totals + callout -->
+    <div class="analysis-card">
+      <div class="card-title">🏆 Heist Totals</div>
+      <div class="totals-grid">
+        <div class="total-card bfs-card">
+          <div class="total-label">BFS scanned</div>
+          <div class="total-value" id="totalBfsExp">0</div>
+        </div>
+        <div class="total-card bfs-card">
+          <div class="total-label">BFS avg/move</div>
+          <div class="total-value" id="avgBfs">—</div>
+        </div>
+        <div class="total-card dfs-card">
+          <div class="total-label">DFS scanned</div>
+          <div class="total-value" id="totalDfsExp">0</div>
+        </div>
+        <div class="total-card dfs-card">
+          <div class="total-label">DFS avg/move</div>
+          <div class="total-value" id="avgDfs">—</div>
+        </div>
+        <div class="total-card neutral-card">
+          <div class="total-label">BFS steps</div>
+          <div class="total-value" id="totalBfsSteps">0</div>
+        </div>
+        <div class="total-card neutral-card">
+          <div class="total-label">DFS steps</div>
+          <div class="total-value" id="totalDfsSteps">0</div>
+        </div>
+      </div>
+      <div class="callout" id="analysisCallout">Make your first move to see analysis.</div>
+    </div>
+
+  </div><!-- /analysis-strip -->
+
+</div><!-- /app -->
+<script src="script.js"></script>
+</body>
+</html>
