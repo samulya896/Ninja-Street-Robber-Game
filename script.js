@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════
    BFS — Queue (FIFO). Marked visited ON ENQUEUE.
          Always finds the shortest path.
-   DFS — Stack (LIFO). Marked visited ON POP.
+   DFS — Stack (LIFO). Marked visited ON PUSH.
          Fixed direction order — deterministic.
    ═══════════════════════════════════════════════════════════ */
 
@@ -124,18 +124,20 @@ function bfs(start, target) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   DFS — Stack (LIFO). Marks visited ON POP.
+   DFS — Stack (LIFO). Marks visited ON PUSH.
+   Marking on push (same as BFS) prevents duplicate entries
+   from accumulating on the stack, which caused the ninja to
+   oscillate back and forth between the same two tiles.
    Returns { path, explored, stackSnapshot }
    ══════════════════════════════════════════════════════════ */
 function dfs(start, target) {
+  const seen     = new Set([`${start.r},${start.c}`]);  // mark on push
   const explored = new Set();
   const stack    = [{ pos: start, path: [start] }];
 
   while (stack.length) {
     const { pos, path } = stack.pop();
-    const k = `${pos.r},${pos.c}`;
-    if (explored.has(k)) continue;
-    explored.add(k);  // mark on pop ✓
+    explored.add(`${pos.r},${pos.c}`);
 
     if (pos.r===target.r && pos.c===target.c)
       return { path, explored, stackSnapshot: [...stack].reverse().map(e=>e.pos) };
@@ -143,8 +145,11 @@ function dfs(start, target) {
     for (let i=DIRS.length-1; i>=0; i--) {
       const [dr,dc] = DIRS[i];
       const np = {r:pos.r+dr, c:pos.c+dc};
-      if (!explored.has(`${np.r},${np.c}`) && passable(np.r,np.c))
+      const nk = `${np.r},${np.c}`;
+      if (!seen.has(nk) && passable(np.r,np.c)) {
+        seen.add(nk);  // mark on push — prevents duplicates ✓
         stack.push({ pos: np, path: [...path, np] });
+      }
     }
   }
   return { path: null, explored, stackSnapshot: [...stack].reverse().map(e=>e.pos) };
